@@ -1,0 +1,195 @@
+from rest_framework import serializers
+from .models import Farm, Crop, MarketListing, Order, DiseaseRecord, MarketPrice, Message, Notification, Fertilizer, FertilizerOrder, Booking
+
+
+class FarmSerializer(serializers.ModelSerializer):
+    owner_name = serializers.CharField(source='owner.name', read_only=True)
+    owner_email = serializers.CharField(source='owner.email', read_only=True)
+    crops_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Farm
+        fields = '__all__'
+        read_only_fields = ('owner', 'farm_code', 'created_at', 'updated_at')
+
+    def get_crops_count(self, obj):
+        return obj.crops.filter(is_active=True).count()
+
+    def create(self, validated_data):
+        validated_data['owner'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class CropSerializer(serializers.ModelSerializer):
+    farm_name = serializers.CharField(source='farm.name', read_only=True)
+
+    class Meta:
+        model = Crop
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class MarketListingSerializer(serializers.ModelSerializer):
+    farmer_name = serializers.CharField(source='farmer.name', read_only=True)
+    farmer_email = serializers.CharField(source='farmer.email', read_only=True)
+
+    class Meta:
+        model = MarketListing
+        fields = '__all__'
+        read_only_fields = ('farmer', 'created_at', 'updated_at')
+
+    def create(self, validated_data):
+        validated_data['farmer'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    farmer_name = serializers.CharField(source='farmer.name', read_only=True)
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = '__all__'
+        read_only_fields = ('order_id', 'farmer', 'total_price', 'created_at', 'updated_at')
+
+    def create(self, validated_data):
+        listing = validated_data.get('listing')
+        validated_data['farmer'] = listing.farmer if listing else self.context['request'].user
+        qty = validated_data.get('quantity_kg', 0)
+        price = validated_data.get('price_per_kg', 0)
+        validated_data['total_price'] = qty * price
+        return super().create(validated_data)
+
+
+class DiseaseRecordSerializer(serializers.ModelSerializer):
+    farmer_name = serializers.CharField(source='farmer.name', read_only=True)
+
+    class Meta:
+        model = DiseaseRecord
+        fields = '__all__'
+        read_only_fields = ('farmer', 'created_at')
+
+    def create(self, validated_data):
+        validated_data['farmer'] = self.context['request'].user
+        instance = super().create(validated_data)
+        # Simulate ML response for demo
+        instance.disease_name = 'Leaf Blight (Demo)'
+        instance.confidence = 87.5
+        instance.severity = 'MEDIUM'
+        instance.symptoms = 'Yellow-brown spots on leaves, wilting edges'
+        instance.causes = 'Fungal infection (Alternaria alternata), high humidity'
+        instance.prevention = 'Crop rotation, remove infected leaves, ensure proper drainage'
+        instance.organic_treatment = 'Neem oil spray (5ml/L), Trichoderma viride application'
+        instance.chemical_treatment = 'Mancozeb 75% WP @ 2g/L or Carbendazim 50% WP @ 1g/L'
+        instance.scan_status = 'COMPLETED'
+        instance.save()
+        return instance
+
+
+class MarketPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MarketPrice
+        fields = '__all__'
+        read_only_fields = ('recorded_date', 'created_at')
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
+        read_only_fields = ('user', 'created_at')
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.name', read_only=True)
+    sender_email = serializers.CharField(source='sender.email', read_only=True)
+    recipient_name = serializers.CharField(source='recipient.name', read_only=True)
+    recipient_email = serializers.CharField(source='recipient.email', read_only=True)
+
+    class Meta:
+        model = Message
+        fields = (
+            'id', 'sender', 'sender_name', 'sender_email',
+            'recipient', 'recipient_name', 'recipient_email',
+            'body', 'is_read', 'created_at',
+        )
+        read_only_fields = ('id', 'sender', 'sender_name', 'sender_email',
+                            'recipient_name', 'recipient_email', 'created_at')
+
+    def create(self, validated_data):
+        validated_data['sender'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class BookingSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
+    customer_email = serializers.CharField(source='customer.email', read_only=True)
+    farmer_name = serializers.CharField(source='farmer.name', read_only=True)
+    listing_crop = serializers.CharField(source='listing.crop_name', read_only=True)
+    listing_price = serializers.DecimalField(source='listing.price_per_kg', max_digits=8, decimal_places=2, read_only=True)
+
+    class Meta:
+        from .models import Booking
+        model = Booking
+        fields = (
+            'id', 'customer', 'customer_name', 'customer_email',
+            'farmer', 'farmer_name', 'listing', 'listing_crop', 'listing_price',
+            'quantity_kg', 'message', 'farmer_note', 'status',
+            'created_at', 'updated_at',
+        )
+        read_only_fields = ('id', 'customer', 'customer_name', 'customer_email',
+                            'farmer', 'farmer_name', 'listing_crop', 'listing_price',
+                            'created_at', 'updated_at')
+
+    def create(self, validated_data):
+        listing = validated_data['listing']
+        validated_data['customer'] = self.context['request'].user
+        validated_data['farmer'] = listing.farmer
+        return super().create(validated_data)
+
+
+class FertilizerSerializer(serializers.ModelSerializer):
+    discount_percent = serializers.IntegerField(read_only=True)
+    crops_list       = serializers.ListField(child=serializers.CharField(), read_only=True)
+    prevents_list    = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+    class Meta:
+        model  = Fertilizer
+        fields = (
+            'id', 'name', 'brand', 'fertilizer_type', 'image', 'image_url', 'description',
+            'crops', 'crops_list', 'prevents', 'prevents_list',
+            'dose', 'usage_notes',
+            'price', 'original_price', 'unit', 'stock',
+            'rating', 'review_count', 'is_verified',
+            'discount_percent', 'is_active', 'created_at',
+        )
+        read_only_fields = ('created_at', 'discount_percent', 'crops_list', 'prevents_list')
+
+
+class FertilizerOrderSerializer(serializers.ModelSerializer):
+    fertilizer_name = serializers.CharField(source='fertilizer.name', read_only=True)
+    fertilizer_brand = serializers.CharField(source='fertilizer.brand', read_only=True)
+
+    class Meta:
+        model = FertilizerOrder
+        fields = (
+            'id', 'order_id', 'user', 'fertilizer', 'fertilizer_name', 'fertilizer_brand',
+            'full_name', 'mobile_number', 'delivery_address', 'city', 'state', 'pincode',
+            'quantity', 'unit_price', 'total_price', 'payment_type', 'status', 'created_at'
+        )
+        read_only_fields = ('id', 'order_id', 'user', 'unit_price', 'total_price', 'status', 'created_at')
+
+    def create(self, validated_data):
+        user = self.context['request'].user if self.context.get('request') and self.context['request'].user.is_authenticated else None
+        fertilizer = validated_data['fertilizer']
+        quantity = validated_data.get('quantity', 1)
+        unit_price = fertilizer.price
+        total_price = unit_price * quantity
+
+        validated_data['user'] = user
+        validated_data['unit_price'] = unit_price
+        validated_data['total_price'] = total_price
+        validated_data['payment_type'] = 'COD'
+
+        return super().create(validated_data)
+

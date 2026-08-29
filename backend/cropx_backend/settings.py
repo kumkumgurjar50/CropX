@@ -1,0 +1,214 @@
+"""
+Django settings for CropX backend.
+"""
+
+from datetime import timedelta
+from pathlib import Path
+import os
+
+# Load .env file if it exists (development convenience)
+_env_path = Path(__file__).resolve().parent.parent / '.env'
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith('#') and '=' in _line:
+            _k, _v = _line.split('=', 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+# backend/cropx_backend/settings.py  →  BASE_DIR = backend/
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# ---------------------------------------------------------------------------
+# Security  (override in production via environment variables)
+# ---------------------------------------------------------------------------
+SECRET_KEY = 'django-insecure-!lwq&dc(2$120#ir68j(#a-v(qe#hw+m!@=u6nh%1a-i763r+s'
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['*']
+
+
+# ---------------------------------------------------------------------------
+# Application definition
+# ---------------------------------------------------------------------------
+INSTALLED_APPS = [
+    'daphne',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
+    # Third-party
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
+
+    # Third-party extras
+    'django_filters',
+
+    # Channels (WebSocket)
+    'channels',
+
+    # Local
+    'authentication',
+    'farms',
+]
+
+# Media files
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'cropx_backend.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'cropx_backend.wsgi.application'
+ASGI_APPLICATION  = 'cropx_backend.asgi.application'
+
+# ---------------------------------------------------------------------------
+# Channel layer — in-memory (no Redis needed for dev)
+# ---------------------------------------------------------------------------
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+
+# ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+AUTH_USER_MODEL = 'authentication.User'
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+
+# ---------------------------------------------------------------------------
+# Internationalisation
+# ---------------------------------------------------------------------------
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+
+# ---------------------------------------------------------------------------
+# Static files
+# ---------------------------------------------------------------------------
+STATIC_URL = 'static/'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ---------------------------------------------------------------------------
+# Django REST Framework
+# ---------------------------------------------------------------------------
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 24,
+}
+
+
+# ---------------------------------------------------------------------------
+# Simple JWT
+# ---------------------------------------------------------------------------
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+
+# ---------------------------------------------------------------------------
+# CORS  (tighten in production)
+# ---------------------------------------------------------------------------
+CORS_ALLOW_ALL_ORIGINS = True
+
+
+# ---------------------------------------------------------------------------
+# Email — SMTP when env vars are set, console otherwise
+# ---------------------------------------------------------------------------
+_EMAIL_HOST     = os.environ.get('EMAIL_HOST', '')
+_EMAIL_USER     = os.environ.get('EMAIL_HOST_USER', '')
+_EMAIL_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+if _EMAIL_HOST and _EMAIL_USER and _EMAIL_PASSWORD:
+    EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST          = _EMAIL_HOST
+    EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER     = _EMAIL_USER
+    EMAIL_HOST_PASSWORD = _EMAIL_PASSWORD
+    DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', f'CropX <{_EMAIL_USER}>')
+else:
+    # Development: emails print to the terminal
+    EMAIL_BACKEND      = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'noreply@cropx.local'
+
+# Frontend origin — used by email links
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
+# ---------------------------------------------------------------------------
+# AI & Weather API keys  (set these in your environment or .env file)
+# ---------------------------------------------------------------------------
+GEMINI_API_KEY      = os.environ.get('GEMINI_API_KEY', '')
+OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
+
+# ---------------------------------------------------------------------------
+# Local ML model
+# ---------------------------------------------------------------------------
+MODEL_DIR = BASE_DIR / 'model'

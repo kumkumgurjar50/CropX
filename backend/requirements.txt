@@ -1,0 +1,42 @@
+# ── Core Django ───────────────────────────────────────────────────────────────
+Django==5.2.15
+asgiref==3.11.0
+
+# ── REST Framework ────────────────────────────────────────────────────────────
+djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
+django-cors-headers==4.9.0
+django-filter==25.2
+
+# ── WebSockets / Channels ─────────────────────────────────────────────────────
+channels==4.2.2
+daphne==4.1.2
+
+# ── Database ──────────────────────────────────────────────────────────────────
+# SQLite is used by default (no extra package needed).
+# Uncomment for PostgreSQL:
+# psycopg2-binary==2.9.11
+# dj-database-url==3.1.1
+
+# ── Authentication & Security ─────────────────────────────────────────────────
+PyJWT==2.11.0
+cryptography==50.0.0
+
+# ── AI / ML ───────────────────────────────────────────────────────────────────
+google-generativeai==0.8.6          # Gemini (AI insights + weather advice)
+# TensorFlow / Keras for local disease model:
+# Install separately in the Anaconda environment used by predictor.py
+# conda install tensorflow  OR  pip install tensorflow keras
+
+# ── HTTP & Utilities ──────────────────────────────────────────────────────────
+requests==2.34.2
+pillow==12.1.0
+
+# ── Static files (production) ─────────────────────────────────────────────────
+whitenoise==6.11.0
+
+# ── WSGI/ASGI server (production) ────────────────────────────────────────────
+gunicorn==25.1.0
+
+# ── Dev / seeding utilities ───────────────────────────────────────────────────
+Faker==40.4.0
