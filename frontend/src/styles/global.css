@@ -1,0 +1,192 @@
+/* ─── Reset & base ─────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Prevent layout shift from scrollbar appearance/disappearance */
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Typography helpers ────────────────────────────────────────────────────── */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+/* ─── Smooth theme transition ───────────────────────────────────────────────── */
+body,
+.MuiPaper-root,
+.MuiAppBar-root,
+.MuiDrawer-paper {
+  transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease;
+}
+
+/* Allow MUI interactive elements to still have smooth hover/transform transitions */
+button,
+a,
+.MuiButtonBase-root,
+.MuiChip-root {
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease !important;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(46, 125, 50, 0.22);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(46, 125, 50, 0.42);
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #2e7d32;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(46, 125, 50, 0.18);
+}
+
+/* ─── Card & Paper symmetry helpers ─────────────────────────────────────────── */
+
+/* Ensure all MUI Cards have consistent internal spacing */
+.MuiCard-root .MuiCardContent-root:last-child {
+  padding-bottom: 20px;
+}
+
+/* Grid containers stretch items to equal height */
+.MuiGrid-container {
+  align-items: stretch;
+}
+
+/* Grid items containing Paper/Card should fill full height */
+.MuiGrid-item>.MuiPaper-root,
+.MuiGrid-item>.MuiCard-root {
+  height: 100%;
+}
+
+/* Charts inside papers should fill container width */
+.recharts-responsive-container {
+  width: 100% !important;
+}
+
+/* ─── Toast overrides — theme-aware ──────────────────────────────────────── */
+.Toastify__toast {
+  border-radius: 14px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14) !important;
+  padding: 12px 16px !important;
+}
+
+.Toastify__toast-body {
+  padding: 0 !important;
+  align-items: center !important;
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light) {
+  .Toastify__toast--success { background: #f0fdf4 !important; color: #166534 !important; border: 1px solid #bbf7d0 !important; }
+  .Toastify__toast--error   { background: #fff1f2 !important; color: #9f1239 !important; border: 1px solid #fecdd3 !important; }
+  .Toastify__toast--info    { background: #eff6ff !important; color: #1e40af !important; border: 1px solid #bfdbfe !important; }
+  .Toastify__toast--warning { background: #fffbeb !important; color: #92400e !important; border: 1px solid #fde68a !important; }
+}
+
+/* Explicit class set by AppThemeProvider data-theme attribute */
+[data-theme="light"] .Toastify__toast--success { background: #f0fdf4 !important; color: #166534 !important; border: 1px solid #bbf7d0 !important; }
+[data-theme="light"] .Toastify__toast--error   { background: #fff1f2 !important; color: #9f1239 !important; border: 1px solid #fecdd3 !important; }
+[data-theme="light"] .Toastify__toast--info    { background: #eff6ff !important; color: #1e40af !important; border: 1px solid #bfdbfe !important; }
+[data-theme="light"] .Toastify__toast--warning { background: #fffbeb !important; color: #92400e !important; border: 1px solid #fde68a !important; }
+
+/* Dark mode toasts */
+[data-theme="dark"] .Toastify__toast--success { background: #14302e !important; color: #86efac !important; border: 1px solid rgba(34,197,94,0.25) !important; }
+[data-theme="dark"] .Toastify__toast--error   { background: #2d1215 !important; color: #fca5a5 !important; border: 1px solid rgba(239,68,68,0.25) !important; }
+[data-theme="dark"] .Toastify__toast--info    { background: #0f2040 !important; color: #93c5fd !important; border: 1px solid rgba(59,130,246,0.25) !important; }
+[data-theme="dark"] .Toastify__toast--warning { background: #2d1f04 !important; color: #fcd34d !important; border: 1px solid rgba(245,158,11,0.25) !important; }
+
+.Toastify__progress-bar--success { background: #22c55e !important; }
+.Toastify__progress-bar--error   { background: #f43f5e !important; }
+.Toastify__progress-bar--info    { background: #3b82f6 !important; }
+.Toastify__progress-bar--warning { background: #f59e0b !important; }
+
+/* ─── Utility classes ────────────────────────────────────────────────────────── */
+.page-padding {
+  padding: 24px;
+}
+
+@media (max-width: 600px) {
+  .page-padding {
+    padding: 16px;
+  }
+}
+
+/* Hide scrollbars on mobile for horizontal scroll containers */
+@media (max-width: 600px) {
+  .hide-scrollbar-mobile {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar-mobile::-webkit-scrollbar {
+    display: none;
+  }
+}
